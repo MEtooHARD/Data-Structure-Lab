@@ -28,12 +28,6 @@ class Node {
   void setNext(Node *n) { next = n; }
   void setPre(Node *p) { pre = p; }
 
-  Node *getEnd() {
-    Node *_ = this;
-    while (_->getNext() != NULL) _ = _->getNext();
-    return _;
-  }
-
   void selfcut() {
     if (getPre()) getPre()->setNext(getNext());
     if (getNext()) getNext()->setPre(getPre());
@@ -45,29 +39,9 @@ class Node {
     setPre(a);
     setNext(b);
   }
-
-  void swapWith(Node *b) {
-    if (this == b) return;
-    Node *this_next = getNext(), *this_prev = getPre();
-    Node *a_next = b->getNext(), *a_prev = b->getPre();
-
-    b->selfcut();
-    if (this_next == b) {
-      b->insert(this_prev, this);
-    } else if (this_prev == b) {
-      b->insert(this, this_next);
-    } else {
-      selfcut();
-      b->insert(this_prev, this_next);
-      insert(a_prev, a_next);
-    }
-  }
 };
 
 class List {
- private:
-  Node *list;
-
  public:
   List() { list = NULL; }
   List(int n) { generate(n); }
@@ -84,18 +58,42 @@ class List {
     if (list != NULL) list->setPre(buf);
     list = buf;
   }
-
-  void swapNode(Node *a, Node *b) {
+  void SwapNode(Node *a, Node *b) {
     if (a == b) return;
-
-    if (list == a)
-      list == b;
-    else if (list == b)
-      list == a;
-
-    a->swapWith(b);
+    Node *a_Pre = a->getPre();
+    Node *a_Next = a->getNext();
+    Node *b_Pre = b->getPre();
+    Node *b_Next = b->getNext();
+    if (a_Next == b) {
+      if (a_Pre) a_Pre->setNext(b);
+      b->setPre(a_Pre);
+      b->setNext(a);
+      a->setPre(b);
+      a->setNext(b_Next);
+      if (b_Next) b_Next->setPre(a);
+    } else if (b_Next == a) {
+      if (b_Pre) b_Pre->setNext(a);
+      a->setPre(b_Pre);
+      a->setNext(b);
+      b->setPre(a);
+      b->setNext(a_Next);
+      if (a_Next) a_Next->setPre(b);
+    } else {
+      if (a_Pre) a_Pre->setNext(b);
+      if (a_Next) a_Next->setPre(b);
+      if (b_Pre) b_Pre->setNext(a);
+      if (b_Next) b_Next->setPre(a);
+      b->setNext(a_Next);
+      b->setPre(a_Pre);
+      a->setNext(b_Next);
+      a->setPre(b_Pre);
+    }
+    if (list == a) {
+      list = b;
+    } else if (list == b) {
+      list = a;
+    }
   }
-
   void bubbleSort() {
     if (list == NULL) {
       return;
@@ -107,7 +105,7 @@ class List {
       while (now->getNext() != NULL) {
         next = now->getNext();
         if (now->getData() > next->getData()) {
-          swapNode(now, next);
+          SwapNode(now, next);
           swapped = true;
         }
         now = next;  // move to the next node
@@ -118,23 +116,17 @@ class List {
   void selectionSort() {
     if (list == NULL) return;
 
-    Node *i = list;
-    Node *j;
-    Node *least;
-    int temp;
-    while (i->getNext() != NULL) {
-      j = i->getNext();
-      least = i;
-      while (j != NULL) {
-        if (least->getData() > j->getData()) least = j;
-        j = j->getNext();
-      }
-      if (least != i) {
-        temp = i->getData();
-        i->setData(least->getData());
-        least->setData(temp);
-      }
-      i = i->getNext();
+    Node *now = list, *compare, *min, *temp;
+    while (now->getNext() != NULL) {
+      min = now;
+      compare = now->getNext();
+      do {
+        if (min->getData() > compare->getData()) min = compare;
+        compare = compare->getNext();
+      } while (compare != NULL);
+      temp = now->getNext();
+      SwapNode(now, min);
+      now = temp;
     }
   }
 
@@ -151,20 +143,19 @@ class List {
         sorting->selfcut();
         sorting->insert(NULL, list);
         list = sorting;
-      }
+      } else
+        while (comp != NULL && comp->getPre() != NULL) {
+          comp = comp->getPre();
 
-      while (comp != NULL && comp->getPre() != NULL) {
-        comp = comp->getPre();
+          if (comp->getData() > sorting->getData() &&
+              comp->getPre()->getData() < sorting->getData()) {
+            sorting->selfcut();
+            sorting->insert(comp->getPre(), comp);
+            break;
+          }
 
-        if (comp->getData() > sorting->getData() &&
-            comp->getPre()->getData() < sorting->getData()) {
-          sorting->selfcut();
-          sorting->insert(comp->getPre(), comp);
-          break;
+          comp = comp->getPre();
         }
-
-        comp = comp->getPre();
-      }
 
       sorting = next;
     }
@@ -178,20 +169,27 @@ class List {
     }
     cout << endl;
   }
+
+ private:
+  Node *list;
 };
 
 int main() {
   srand(time(NULL));
+  cout << "bubble";
+  cout << "========================\n";
   List *l = new List(10);
   l->print();
   l->bubbleSort();
   l->print();
-
+  cout << "insertion";
+  cout << "========================\n";
   l = new List(10);
   l->print();
   l->insertionSort();
   l->print();
-
+  cout << "selection";
+  cout << "========================\n";
   l = new List(10);
   l->print();
   l->selectionSort();

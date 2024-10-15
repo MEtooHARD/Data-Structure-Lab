@@ -34,7 +34,7 @@ class Node {
     return temp;
   }
 
-  void suicide() {
+  void selfcut() {
     if (getPre()) getPre()->setNext(getNext());
     if (getNext()) getNext()->setPre(getPre());
   }
@@ -115,24 +115,33 @@ class List {
   void insertionSort() {
     if (list == NULL) return;
 
-    Node *i = list->getNext();
-    Node *j, *temp;
-    while (i != NULL) {
-      j = i->getPre();
-      temp = i;
+    Node *sorting = list->getNext(), *comp, *next;
 
-      if (list->getData() > i->getData()) {
-        temp->suicide();
-        temp->insert(NULL, list);
-      } else if (j != NULL && j->getPre() != NULL) {
-        while (j != NULL && j->getData() > i->getData()) j = j->getPre();
-        if (j != temp->getPre()) {
-          temp->suicide();
-          temp->insert(j->getPre(), j);
-        }
+    while (sorting != NULL) {
+      next = sorting->getNext();
+      comp = sorting;
+
+      if (list->getData() > sorting->getData()) {  // (before head)
+        sorting->selfcut();
+        sorting->insert(NULL, list);
+        list = sorting;
       }
-      i = i->getNext();
-    };
+
+      while (comp != NULL && comp->getPre() != NULL) {
+        comp = comp->getPre();
+
+        if (comp->getData() > sorting->getData() &&
+            comp->getPre()->getData() < sorting->getData()) {
+          sorting->selfcut();
+          sorting->insert(comp->getPre(), comp);
+          break;
+        }
+
+        comp = comp->getPre();
+      }
+
+      sorting = next;
+    }
   }
 
   void print() {
