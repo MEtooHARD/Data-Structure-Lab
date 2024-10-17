@@ -71,30 +71,31 @@ class List {
   void bubbleSort() {
     if (list == NULL) return;
 
-    Node *end = list->getEnd();
-    Node *i = list;
-    Node *j;
-    int temp;
-    while (i->getNext() != NULL) {
-      j = end;
-      while (i != j) {
-        if (j->getPre()->getData() > j->getData()) {
-          temp = j->getData();
-          j->setData(j->getPre()->getData());
-          j->getPre()->setData(temp);
+    Node *end = NULL;
+    bool swapped;
+
+    do {
+      swapped = false;
+      Node *current = list;
+
+      while (current->getNext() != end) {
+        if (current->getData() > current->getNext()->getData()) {
+          int temp = current->getData();
+          current->setData(current->getNext()->getData());
+          current->getNext()->setData(temp);
+          swapped = true;
         }
-        j = j->getPre();
+        current = current->getNext();
       }
-      i = i->getNext();
-    }
+      end = current;
+    } while (swapped);
   }
 
   void selectionSort() {
     if (list == NULL) return;
 
     Node *i = list;
-    Node *j;
-    Node *least;
+    Node *j, *least;
     int temp;
     while (i->getNext() != NULL) {
       j = i->getNext();
@@ -119,25 +120,23 @@ class List {
 
     while (sorting != NULL) {
       next = sorting->getNext();
-      comp = sorting;
+      comp = sorting->getPre();
+
+      sorting->selfcut();
 
       if (list->getData() > sorting->getData()) {  // (before head)
-        sorting->selfcut();
         sorting->insert(NULL, list);
         list = sorting;
-      }
+      } else {
+        while (comp != NULL && comp->getData() > sorting->getData())
+          comp = comp->getPre();
 
-      while (comp != NULL && comp->getPre() != NULL) {
-        comp = comp->getPre();
-
-        if (comp->getData() > sorting->getData() &&
-            comp->getPre()->getData() < sorting->getData()) {
-          sorting->selfcut();
+        if (comp == NULL) {
           sorting->insert(comp->getPre(), comp);
-          break;
+          list = sorting;
+        } else {
+          sorting->insert(comp, comp->getNext());
         }
-
-        comp = comp->getPre();
       }
 
       sorting = next;
@@ -163,11 +162,11 @@ int main() {
 
   l = new List(10);
   l->print();
-  l->insertionSort();
+  l->selectionSort();
   l->print();
 
   l = new List(10);
   l->print();
-  l->selectionSort();
+  l->insertionSort();
   l->print();
 }
