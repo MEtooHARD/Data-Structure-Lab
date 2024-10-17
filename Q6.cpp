@@ -28,6 +28,12 @@ class Node {
   void setNext(Node *n) { next = n; }
   void setPre(Node *p) { pre = p; }
 
+  Node *getEnd() {
+    Node *temp = this;
+    while (temp->getNext() != NULL) temp = temp->getNext();
+    return temp;
+  }
+
   void selfcut() {
     if (getPre()) getPre()->setNext(getNext());
     if (getNext()) getNext()->setPre(getPre());
@@ -39,9 +45,36 @@ class Node {
     setPre(a);
     setNext(b);
   }
+
+  void swapWith(Node *b) {
+    if (this == b) return;
+    Node *this_next = getNext(), *this_prev = getPre();
+    Node *a_next = b->getNext(), *a_prev = b->getPre();
+
+    b->selfcut();
+    if (this_next == b) {
+      b->insert(this_prev, this);
+    } else if (this_prev == b) {
+      b->insert(this, this_next);
+    } else {
+      selfcut();
+      b->insert(this_prev, this_next);
+      insert(a_prev, a_next);
+    }
+  }
+
+  static void point_persister(Node *&a, Node *&b, Node *&p) {
+    if (a == p)
+      p = b;
+    else if (b == p)
+      p = a;
+  }
 };
 
 class List {
+ private:
+  Node *list;
+
  public:
   List() { list = NULL; }
   List(int n) { generate(n); }
@@ -58,126 +91,82 @@ class List {
     if (list != NULL) list->setPre(buf);
     list = buf;
   }
-  void SwapNode(Node *a, Node *b) {
-    if (a == b) return;
-    Node *a_Pre = a->getPre();
-    Node *a_Next = a->getNext();
-    Node *b_Pre = b->getPre();
-    Node *b_Next = b->getNext();
-    if (a_Next == b) {
-      if (a_Pre) a_Pre->setNext(b);
-      b->setPre(a_Pre);
-      b->setNext(a);
-      a->setPre(b);
-      a->setNext(b_Next);
-      if (b_Next) b_Next->setPre(a);
-    } else if (b_Next == a) {
-      if (b_Pre) b_Pre->setNext(a);
-      a->setPre(b_Pre);
-      a->setNext(b);
-      b->setPre(a);
-      b->setNext(a_Next);
-      if (a_Next) a_Next->setPre(b);
-    } else {
-      if (a_Pre) a_Pre->setNext(b);
-      if (a_Next) a_Next->setPre(b);
-      if (b_Pre) b_Pre->setNext(a);
-      if (b_Next) b_Next->setPre(a);
-      b->setNext(a_Next);
-      b->setPre(a_Pre);
-      a->setNext(b_Next);
-      a->setPre(b_Pre);
-    }
-    if (list == a) {
-      list = b;
-    } else if (list == b) {
-      list = a;
-    }
-  }
+
   void bubbleSort() {
-    if (list == NULL) {
-      return;
-    }
+    if (list == NULL) return;
+
+    Node *end = NULL, *next;
     bool swapped;
+
     do {
       swapped = false;
-      Node *now = list, *next;
-      while (now->getNext() != NULL) {
-        next = now->getNext();
-        if (now->getData() > next->getData()) {
-          SwapNode(now, next);
+      Node *current = list;
+
+      while (current->getNext() != end) {
+        next = current->getNext();
+
+        if (current->getData() > next->getData()) {
+          current->swapWith(next);
+          Node::point_persister(current, next, list);
+
           swapped = true;
+        } else {
+          current = current->getNext();
         }
-        now = next;  // move to the next node
       }
+      end = current;
     } while (swapped);
   }
 
   void selectionSort() {
-    if (list == NULL) {
-      return;
-    }
-    Node *now = list, *compare, *min, *temp;
-    while (now->getNext() != NULL) {
-      min = now;
-      compare = now->getNext();
-      while (compare != NULL) {
-        if (min->getData() > compare->getData()) {
-          min = compare;
-        }
-        compare = compare->getNext();
-      }
-      temp = now->getNext();
-      SwapNode(now, min);
-      now = temp;
-    }
-  }
+    if (list == NULL) return;
 
-  void insert(Node *n, Node *pos) {
-    // Remove node from the unsorted portion
-    if (n->getPre() != NULL) {
-      n->getPre()->setNext(n->getNext());
-    }
-    if (n->getNext() != NULL) {
-      n->getNext()->setPre(n->getPre());
-    }
-    // Insert current node into the correct position in the sorted portion
-    if (pos == NULL) {
-      // Insert at the head of the list
-      n->setNext(list);
-      list->setPre(n);
-      n->setPre(NULL);
-      list = n;
-    } else {
-      n->setNext(pos->getNext());
-      n->setPre(pos);
-      if (pos->getNext() != NULL) {
-        pos->getNext()->setPre(n);
+    Node *i = list, *j, *least;
+
+    while (i->getNext() != NULL) {
+      j = i->getNext();
+      least = i;
+
+      while (j != NULL) {
+        if (least->getData() > j->getData()) least = j;
+        j = j->getNext();
       }
-      pos->setNext(n);
+
+      if (least != i) {
+        i->swapWith(least);
+        Node::point_persister(i, least, list);
+      }
+      i = least->getNext();
     }
   }
 
   void insertionSort() {
-    if (list == NULL || list->getNext() == NULL) {
-      return;
-    }
+    if (list == NULL) return;
 
-    Node *sortedEnd = list;
-    Node *unsorted = list->getNext();
+    Node *sorting = list->getNext(), *comp, *next;
 
-    while (unsorted != NULL) {
-      Node *now = unsorted;
-      unsorted = unsorted->getNext();
+    while (sorting != NULL) {
+      next = sorting->getNext();
+      comp = sorting->getPre();
 
-      Node *pos = sortedEnd;
-      while (pos != NULL && pos->getData() > now->getData()) {
-        pos = pos->getPre();
+      sorting->selfcut();
+
+      if (list->getData() > sorting->getData()) {  // (before head)
+        sorting->insert(NULL, list);
+        list = sorting;
+      } else {
+        while (comp != NULL && comp->getData() > sorting->getData())
+          comp = comp->getPre();
+
+        if (comp == NULL) {
+          sorting->insert(comp->getPre(), comp);
+          list = sorting;
+        } else {
+          sorting->insert(comp, comp->getNext());
+        }
       }
-      insert(now, pos);
-      if (sortedEnd->getNext() == now) {
-        sortedEnd = now;
-      }
+
+      sorting = next;
     }
   }
 
@@ -189,27 +178,20 @@ class List {
     }
     cout << endl;
   }
-
- private:
-  Node *list;
 };
 
 int main() {
   srand(time(NULL));
-  cout << "bubble";
-  cout << "========================\n";
   List *l = new List(10);
   l->print();
   l->bubbleSort();
   l->print();
-  cout << "selection";
-  cout << "========================\n";
+
   l = new List(10);
   l->print();
   l->selectionSort();
   l->print();
-  cout << "insertion";
-  cout << "========================\n";
+
   l = new List(10);
   l->print();
   l->insertionSort();
