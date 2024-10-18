@@ -63,7 +63,7 @@ class Node {
     }
   }
 
-  static void point_persister(Node *&a, Node *&b, Node *&p) {
+  static void key_node_persister(Node *&a, Node *&b, Node *&p) {
     if (a == p)
       p = b;
     else if (b == p)
@@ -107,7 +107,7 @@ class List {
 
         if (current->getData() > next->getData()) {
           current->swapWith(next);
-          Node::point_persister(current, next, list);
+          Node::key_node_persister(current, next, list);
 
           swapped = true;
         } else {
@@ -134,7 +134,7 @@ class List {
 
       if (least != i) {
         i->swapWith(least);
-        Node::point_persister(i, least, list);
+        Node::key_node_persister(i, least, list);
       }
       i = least->getNext();
     }
@@ -151,19 +151,14 @@ class List {
 
       sorting->selfcut();
 
-      if (list->getData() > sorting->getData()) {  // (before head)
+      if (list->getData() > sorting->getData()) {
         sorting->insert(NULL, list);
         list = sorting;
       } else {
         while (comp != NULL && comp->getData() > sorting->getData())
           comp = comp->getPre();
 
-        if (comp == NULL) {
-          sorting->insert(comp->getPre(), comp);
-          list = sorting;
-        } else {
-          sorting->insert(comp, comp->getNext());
-        }
+        sorting->insert(comp, comp->getNext());
       }
 
       sorting = next;
