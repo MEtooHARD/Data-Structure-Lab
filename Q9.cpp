@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <queue>
 
 using namespace std;
 
@@ -22,22 +23,41 @@ class BinaryTreeInArray {
 
  public:
   BinaryTreeInArray() : array(nullptr), height(0), numOfElement(0) {}
+
   void addElementAsCompleteTree(T data) {
     int cap = pow(2, height) - 1;
     if (numOfElement + 1 > cap) resize((cap + 1) * 2 - 1);
     array[numOfElement] = data;
     numOfElement++;
   }
-  void displayInorder() {}
-  void displayPreorder() {}
-  void displayPostorder() {}
+
+  void displayInorder(int i = 0) {
+    if (i >= numOfElement) return;
+    displayInorder(i * 2 + 1);
+    cout << array[i] << ' ';
+    displayInorder(i * 2 + 2);
+  }
+
+  void displayPreorder(int i = 0) {
+    if (i >= numOfElement) return;
+    cout << array[i] << ' ';
+    displayPreorder(i * 2 + 1);
+    displayPreorder(i * 2 + 2);
+  }
+
+  void displayPostorder(int i = 0) {
+    if (i >= numOfElement) return;
+    displayPostorder(i * 2 + 1);
+    displayPostorder(i * 2 + 2);
+    cout << array[i] << ' ';
+  }
 };
 
 template <class T>
 class BinaryTreeInLinkedList {
  private:
   class TreeNode {
-   private:
+    //  private:
    public:
     TreeNode(T d) : data(d), left(nullptr), right(nullptr) {}
     TreeNode *left, *right;
@@ -48,10 +68,60 @@ class BinaryTreeInLinkedList {
 
  public:
   BinaryTreeInLinkedList() : root(nullptr), numOfElement(0) {}
-  void addElementAsCompleteTree(T data) {}
-  void displayInorder() {}
-  void displayPreorder() {}
-  void displayPostorder() {}
+
+  void addElementAsCompleteTree(T data) {
+    TreeNode *newNode = new TreeNode(data);
+    if (root == nullptr) {
+      root = newNode;
+      numOfElement++;
+      return;
+    }
+
+    std::queue<TreeNode *> q;
+    q.push(root);
+
+    while (!q.empty()) {
+      TreeNode *current = q.front();
+      q.pop();
+
+      if (current->left == nullptr) {
+        current->left = newNode;
+        numOfElement++;
+        return;
+      } else {
+        q.push(current->left);
+      }
+
+      if (current->right == nullptr) {
+        current->right = newNode;
+        numOfElement++;
+        return;
+      } else {
+        q.push(current->right);
+      }
+    }
+  }
+
+  void displayInorder(TreeNode *n = nullptr) {
+    if (n == nullptr) n = root;
+    if (n->left != nullptr) displayInorder(n->left);
+    cout << n->data << ' ';
+    if (n->right != nullptr) displayInorder(n->right);
+  }
+
+  void displayPreorder(TreeNode *n = nullptr) {
+    if (n == nullptr) n = root;
+    cout << n->data << ' ';
+    if (n->left != nullptr) displayPreorder(n->left);
+    if (n->right != nullptr) displayPreorder(n->right);
+  }
+
+  void displayPostorder(TreeNode *n = nullptr) {
+    if (n == nullptr) n = root;
+    if (n->left != nullptr) displayPostorder(n->left);
+    if (n->right != nullptr) displayPostorder(n->right);
+    cout << n->data << ' ';
+  }
 };
 
 int main() {
