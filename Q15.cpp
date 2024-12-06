@@ -14,6 +14,10 @@ class SuffixTreeNode {
   SuffixTreeNode(int start, int end, char text)
       : start(start), end(end), text(text), count(0) {}
 
+  ~SuffixTreeNode() {
+    for (SuffixTreeNode *child : children) delete child;
+  }
+
   int find(char ch) {
     for (int i = 0; i < children.size(); i++)
       if (children[i]->text == ch) return i;
@@ -49,6 +53,8 @@ class SuffixTree {
     root = new SuffixTreeNode(-1, -1, '\u200b');
     for (int i = 0; i < text.length(); i++) insertSuffix(i);
   }
+
+  ~SuffixTree() { delete root; }
 
   bool exist(const std::string &substring) {
     SuffixTreeNode *current = root;
